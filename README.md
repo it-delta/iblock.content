@@ -1,6 +1,6 @@
 # iblock.content
 
-Универсальный компонент инфоблоков для CMS Bitrix (замена news.list). 
+Универсальный компонент инфоблоков для CMS Bitrix (замена news.list).
 Вывод одностраничниго контента
 
 ```php
@@ -14,29 +14,27 @@ $APPLICATION->IncludeComponent(
 		"SORT_ORDER1" => "DESC",
 		"SORT_BY2" => "ID",
 		"SORT_ORDER2" => "DESC",
-		"FILTER" => [],
+		"FILTER_NAME" => '',					// имя переменной с фильтром
 		"PAGE_ELEMENT_COUNT" => "4",
-		"RAND_ELEMENTS" => "N",
-        // Не обязательный параметр
-        "PAGINATION" => [
-            "NAME" => "Страницы",
-            "TEMPLATE" => ".default"
+		"RAND_ELEMENTS" => "N",				// вывод в случайном порядке (сортировка не будет работать)
+		"CACHE_TYPE" => "A",
+    "CACHE_TIME" => 3600,
+    // Не обязательные параметры
+    "PAGINATION" => [
+        "NAME" => "Страницы",
+        "TEMPLATE" => ".default"
+    ],
+    "IMG_CACHE" => [
+        "PREVIEW_PICTURE" => [
+            "SIZE" => ["width" => 200, "height" => 200],
+            "TYPE" => BX_RESIZE_IMAGE_EXACT
         ],
-        // Не обязательный параметр
-        "IMG_CACHE" => [
-            // Не обязательный параметр
-            "PREVIEW_PICTURE" => [
-                "SIZE" => ["width" => 200, "height" => 200],
-                "TYPE" => BX_RESIZE_IMAGE_EXACT
-            ],
-            // Не обязательный параметр
-            "DETAIL_PICTURE" => [
-                "SIZE" => ["width" => 200, "height" => 200],
-                "TYPE" => BX_RESIZE_IMAGE_EXACT
-            ]
-        ],
-        "CACHE_TYPE" => "A", 
-        "CACHE_TIME" => 3600 
+        "DETAIL_PICTURE" => [
+            "SIZE" => ["width" => 200, "height" => 200],
+            "TYPE" => BX_RESIZE_IMAGE_EXACT
+        ]
+    ],
+		"ADD_CACHE_STRING" = "",	// дополнительная строка для кеширования
 	)
 );
 ```

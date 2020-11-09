@@ -1,27 +1,61 @@
 <?php
 
 /**
- * Bitrix component iblock.content (webgsite.ru)
+ * Bitrix component iblock.content
  * Компонент для битрикс, работа с инфоблоком одностраничный вывод
  *
- * @author    Falur <ienakaev@ya.ru>
- * @link      https://github.com/falur/bitrix.com.iblock.content
- * @copyright 2015 - 2016 webgsite.ru
+ * @author    it-delta
+ * @link      https://github.com/it-delta/iblock.content.git
+ * @copyright 2020 it-delta.ru
  * @license   GNU General Public License http://www.gnu.org/licenses/gpl-2.0.html
  */
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
 use CDBResult;
 use CIBlockElement;
 use CIBlock;
 
-class IblockContentComponent extends CBitrixComponent
+class ItDeltaIblockContentComponent extends CBitrixComponent
 {
+    private $_request;
     protected $pagination;
 
     /**
+     * Проверка наличия модулей требуемых для работы компонента
+     * @return bool
+     * @throws Exception
+     */
+     private function _checkModules() {
+        if (   !Loader::includeModule('iblock')
+        ) {
+            throw new \Exception('Не загружены модули необходимые для работы модуля');
+        }
+
+        return true;
+    }
+
+    /**
+     * Обертка над глобальной переменной
+     * @return CAllMain|CMain
+     */
+    private function _app() {
+        global $APPLICATION;
+        return $APPLICATION;
+    }
+
+    /**
+     * Обертка над глобальной переменной
+     * @return CAllUser|CUser
+     */
+    private function _user() {
+        global $USER;
+        return $USER;
+    }
+
+    /**
      * Возвращает папрметры сортировки
-     * 
+     *
      * @return array
      */
     protected function getSort()
@@ -60,37 +94,37 @@ class IblockContentComponent extends CBitrixComponent
                 'DETAIL_PICTURE' => []
             ];
 
-            if (isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE'])) {
-                $arParams['IMG_CACHE']['PREVIEW_PICTURE'] = [
-                    'SIZE' => [
-                        'width' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_WIDTH'])
-                                    ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_WIDTH']
-                                    : 800,
-                        'height' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_HEIGHT'])
-                                    ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_HEIGHT']
-                                    : 600
-                    ],
-                    'TYPE' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE'])
-                                ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE']
-                                : BX_RESIZE_IMAGE_EXACT
-                ];
-            }
+            // if (isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE'])) {
+            //     $arParams['IMG_CACHE']['PREVIEW_PICTURE'] = [
+            //         'SIZE' => [
+            //             'width' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_WIDTH'])
+            //                         ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_WIDTH']
+            //                         : 800,
+            //             'height' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_HEIGHT'])
+            //                         ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_HEIGHT']
+            //                         : 600
+            //         ],
+            //         'TYPE' => isset($arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE'])
+            //                     ? $arParams['IMG_CACHE_PREVIEW_PICTURE_SIZE_TYPE']
+            //                     : BX_RESIZE_IMAGE_EXACT
+            //     ];
+            // }
 
-            if (isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE'])) {
-                $arParams['IMG_CACHE']['PREVIEW_PICTURE'] = [
-                    'SIZE' => [
-                        'width' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_WIDTH'])
-                                    ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_WIDTH']
-                                    : 800,
-                        'height' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_HEIGHT'])
-                                    ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_HEIGHT']
-                                    : 600
-                    ],
-                    'TYPE' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE'])
-                                ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE']
-                                : BX_RESIZE_IMAGE_EXACT
-                ];
-            }
+            // if (isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE'])) {
+            //     $arParams['IMG_CACHE']['PREVIEW_PICTURE'] = [
+            //         'SIZE' => [
+            //             'width' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_WIDTH'])
+            //                         ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_WIDTH']
+            //                         : 800,
+            //             'height' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_HEIGHT'])
+            //                         ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_HEIGHT']
+            //                         : 600
+            //         ],
+            //         'TYPE' => isset($arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE'])
+            //                     ? $arParams['IMG_CACHE_DETAIL_PICTURE_SIZE_TYPE']
+            //                     : BX_RESIZE_IMAGE_EXACT
+            //     ];
+            // }
         }
 
         return $arParams;
@@ -98,7 +132,7 @@ class IblockContentComponent extends CBitrixComponent
 
     /**
      * Возвращает параметры фильтрации
-     * 
+     *
      * @return array
      */
     protected function getFilter()
@@ -110,15 +144,21 @@ class IblockContentComponent extends CBitrixComponent
             'ACTIVE' => 'Y',
             'CHECK_PERMISSIONS' => 'Y',
             'MIN_PERMISSION' => 'R',
-        	'SECTION_ID' => $this->arParams['SECTION_ID']
         ];
 
         if ($this->arParams['ACTIVE_DATE'] == 'Y') {
             $arFilter['ACTIVE_DATE'] = 'Y';
         }
 
-        if (!empty($this->arParams['FILTER'])) {
-            $arFilter = array_merge($this->arParams['FILTER'], $arFilter);
+        if (!empty($this->arParams['SECTION_ID'])) {
+            $arFilter['IBLOCK_SECTION_ID'] = $this->arParams['SECTION_ID'];
+        }
+
+        if (!empty($this->arParams["FILTER_NAME"]) && preg_match("/^[A-Za-z_][A-Za-z01-9_]*$/", $this->arParams["FILTER_NAME"])) {
+        	global ${$this->arParams["FILTER_NAME"]};
+        	$parsedFilter = ${$this->arParams["FILTER_NAME"]};
+        	if (is_array($parsedFilter))
+        		$arFilter = array_merge($arFilter, $parsedFilter);
         }
 
         return $arFilter;
@@ -126,7 +166,7 @@ class IblockContentComponent extends CBitrixComponent
 
     /**
      * Возвращает параметры количества выбранных записей
-     * 
+     *
      * @return boolean|array
      */
     protected function getPaginationParams()
@@ -142,7 +182,7 @@ class IblockContentComponent extends CBitrixComponent
 
     /**
      * Возвращает параметры выборки, т.е. какие поля выбирать
-     * 
+     *
      * @return array
      */
     protected function getSelect()
@@ -150,7 +190,6 @@ class IblockContentComponent extends CBitrixComponent
         return $arSelect = [
             'ID',
             'IBLOCK_ID',
-        	'SECTION_ID',
             'CODE',
             'XML_ID',
             'NAME',
@@ -245,12 +284,12 @@ class IblockContentComponent extends CBitrixComponent
             $arResult[] = $arItem;
         }
 
-        $this->arParams['PAGINATION']['NAME'] = 
+        $this->arParams['PAGINATION']['NAME'] =
             (isset($this->arParams['PAGINATION']['NAME']) && !empty($this->arParams['PAGINATION']['NAME']))
             ? $this->arParams['PAGINATION']['NAME']
             : 'Страницы';
 
-        $this->arParams['PAGINATION']['TEMPLATE'] = 
+        $this->arParams['PAGINATION']['TEMPLATE'] =
             (isset($this->arParams['PAGINATION']['NAME']) && !empty($this->arParams['PAGINATION']['NAME']))
             ? $this->arParams['PAGINATION']['TEMPLATE']
             : '.default';
@@ -270,13 +309,13 @@ class IblockContentComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
-        Loader::includeModule('iblock');
-
-        global $APPLICATION;
+        $this->_checkModules();
+        $this->_request = Application::getInstance()->getContext()->getRequest();
 
         $pages_count = $this->bitrix->arParams['PAGINATION']['COUNT'] ? : 10;
         $nav         = CDBResult::NavStringForCache($pages_count);
-        $cache_id    = $APPLICATION->GetCurDir() . $nav . $this->arParams['ADD_CACHE_STRING'];
+        // дополнительный кеш по адресу страницы + страница навигации + доп. произвольная строка из параметров
+        $cache_id    = $this->_app()->GetCurDir() . $nav . $this->arParams['ADD_CACHE_STRING'];
 
         if ($this->StartResultCache(false, $cache_id)) {
             $this->arResult['ITEMS']      = $this->getData();
