@@ -5,7 +5,7 @@
 
 ```php
 $APPLICATION->IncludeComponent(
-	"falur:iblock.content",
+	"it-delta:iblock.content",
 	"",
 	array(
 		"IBLOCK_TYPE" => "news",
